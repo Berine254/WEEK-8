@@ -1,0 +1,86 @@
+-- Question 1: Achieving 1NF (First Normal Form)
+-- Transform the given table ProductDetail into 1NF by ensuring each product is represented in a separate row.
+
+-- Original Table
+-- ProductDetail(OrderID, CustomerName, Products)
+
+-- SQL Query to achieve 1NF
+WITH SplitProducts AS (
+    SELECT
+        OrderID,
+        CustomerName,
+        TRIM(value) AS Product
+    FROM ProductDetail
+    CROSS APPLY STRING_SPLIT(Products, ',')
+)
+SELECT 
+    OrderID, 
+    CustomerName, 
+    Product
+FROM 
+    SplitProducts;
+
+-- Result:
+-- +---------+--------------+----------+
+-- | OrderID | CustomerName | Product  |
+-- +---------+--------------+----------+
+-- | 101     | John Doe     | Laptop   |
+-- | 101     | John Doe     | Mouse    |
+-- | 102     | Jane Smith   | Tablet   |
+-- | 102     | Jane Smith   | Keyboard |
+-- | 102     | Jane Smith   | Mouse    |
+-- | 103     | Emily Clark  | Phone    |
+-- +---------+--------------+----------+
+
+
+-- Question 2: Achieving 2NF (Second Normal Form)
+-- Transform the given table OrderDetails into 2NF by removing partial dependencies.
+
+-- Original Table
+-- OrderDetails(OrderID, CustomerName, Product, Quantity)
+
+-- SQL Queries to achieve 2NF
+
+-- Step 1: Create a separate table for CustomerDetails to remove the dependency of CustomerName on OrderID.
+WITH CustomerDetails AS (
+    SELECT DISTINCT
+        OrderID,
+        CustomerName
+    FROM OrderDetails
+)
+SELECT * FROM CustomerDetails;
+
+-- Result:
+-- +---------+--------------+
+-- | OrderID | CustomerName |
+-- +---------+--------------+
+-- | 101     | John Doe     |
+-- | 102     | Jane Smith   |
+-- | 103     | Emily Clark  |
+-- +---------+--------------+
+
+-- Step 2: Create a new table for OrderProducts to associate products and quantities with OrderID.
+WITH OrderProducts AS (
+    SELECT
+        OrderID,
+        Product,
+        Quantity
+    FROM OrderDetails
+)
+SELECT * FROM OrderProducts;
+
+-- Result:
+-- +---------+----------+----------+
+-- | OrderID | Product  | Quantity |
+-- +---------+----------+----------+
+-- | 101     | Laptop   | 2        |
+-- | 101     | Mouse    | 1        |
+-- | 102     | Tablet   | 3        |
+-- | 102     | Keyboard | 1        |
+-- | 102     | Mouse    | 2        |
+-- | 103     | Phone    | 1        |
+-- +---------+----------+----------+
+
+-- Final Schema:
+-- Table 1: CustomerDetails(OrderID, CustomerName)
+-- Table 2: OrderProducts(OrderID, Product, Quantity)
